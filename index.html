@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Randomized Inspiration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
+
+    <script src="piano.js"></script>
+    <link rel="stylesheet" href="piano.css" media="all">
+  </head>
+  <body>
+  <section class="section">
+    <div class="container">
+      <h1 class="title">
+        Fueled by Randomness
+      </h1>
+      <p class="subtitle">
+      Randomized Inspiration for Composers
+      </p>
+
+      <p>
+      Hello, composers with writer's block.
+      </p>
+
+      <p>
+      Here is a tool that will give you randomized
+      constraints for writing new material. It has
+      been described as a "clever way of beating
+      inspiration into submission".
+      </p>
+
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container" style="text-align: center;">
+      <a href="#submit-button" name="submit-button" id="submit-button" class="button is-primary is-large">
+        Click Me for Instant Inspiration
+      </a>
+    </div>
+  </section>
+
+  <div id="results-placeholder"></div>
+
+  <script id="results-template" type="x-template">
+  <section class="section">
+    <div class="container">
+      <h1 class="title">
+        Write something in TIME_SIGNATURE with
+        <em>ONLY</em>
+        the following NUM_NOTES notes:
+      </h1>
+
+      <br>
+      <br>
+      
+      <div class='piano-container piano-show-names'></div>
+      <div style="clear:both;"></div>
+
+      <br>
+      <br>
+      <a href="#" id="play-button" class="button is-primary is-large">
+        <span class="icon is-small is-left">
+          <i class="fas fa-play fa-xs"></i>
+        </span>
+        &nbsp;
+        Play
+      </a>
+    </div>
+  </section>
+  </script>
+
+  <!--
+  <section class="section">
+    <div class="container">
+
+      <form action="">
+        <div class="field">
+          <label class="label is-large">Large input</label>
+
+
+          <div class="columns">
+            <div class="column">
+              <div class="control has-icons-left has-icons-right">
+                <input class="input is-large" type="email" placeholder="Extra small">
+                <span class="icon is-small is-left">
+                  <i class="fas fa-envelope fa-xs"></i>
+                </span>
+                <span class="icon is-small is-right">
+                  <i class="fas fa-check fa-xs"></i>
+                </span>
+              </div>
+            </div>
+            <div class="column">
+              Second column
+            </div>
+          </div>
+
+        </div>
+
+      </form>
+    </div>
+  </section>
+  -->
+
+  <script>
+    (function() {
+      var submitButton = document.getElementById('submit-button');
+      var isComputing = false;
+      submitButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        if (isComputing) { return; }
+
+        document.getElementById('results-placeholder').innerHTML = "";
+        isComputing = true;
+        submitButton.setAttribute('disabled', true);
+
+        submitButton.style.minWidth =
+          window.getComputedStyle(submitButton).width;
+
+        var texts = [
+          "Simulating Annealing...",
+          "Reticulating Splines...",
+          "Pretending to do work...",
+        ];
+        var oldText = submitButton.text;
+        submitButton.text = texts[Math.floor(Math.random() * texts.length)];
+
+        setTimeout(function() {
+          isComputing = false;
+          displayResults();
+
+          submitButton.text = "Success! See results below.";
+          submitButton.removeAttribute('disabled');
+
+          setTimeout(function() {
+            submitButton.text = oldText;
+          }, 7000);
+        }, 1);
+      });
+
+      function shuffleArray(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var temp = array[i];
+          array[i] = array[j];
+          array[j] = temp;
+        }
+      }
+
+      function displayResults() {
+        var NUM_NOTES = 6;
+
+        var timeSignatures = "3/4,4/4,5/4,6/8,7/8,11/8".split(',');
+        var timeSignature = timeSignatures[
+          Math.floor(Math.random() * timeSignatures.length)];
+
+        document.getElementById('results-placeholder').innerHTML = 
+          document.getElementById('results-template').innerHTML
+                  .replace("TIME_SIGNATURE", timeSignature)
+                  .replace("NUM_NOTES", NUM_NOTES);
+
+        var container = document.querySelector('.piano-container');
+        piano(container, {octaves: 2});
+
+        var intervals = [0,1,2,3,4,5,6,7,8,9,10,11];
+        var notes = "C Cs D Ds E F Fs G Gs A As B".split(' ');
+        shuffleArray(intervals);
+        var subsetIntervals = intervals.slice(intervals.length - NUM_NOTES);
+        subsetIntervals = subsetIntervals.sort(function (a,b) {
+          return a - b;
+        });
+
+        var subsetNotes = [];
+        for (var i = 0; i < subsetIntervals.length; ++i) {
+          subsetNotes.push(notes[subsetIntervals[i]]);
+        }
+        console.log(subsetNotes);
+
+        var playButton = document.getElementById("play-button");
+
+        var isPlaying = false;
+
+        function playNotes(timeoutInc) {
+          if (isPlaying) { return; }
+          isPlaying = true;
+          playButton.setAttribute('disabled', true);
+
+          document.querySelectorAll("#beautiful-piano .active").forEach(function(el) {
+            el.classList.remove('active');
+          });
+
+          var timeout = 200;
+          for(var i = 2; i <= 5; ++i) {
+            for(var j = 0; j < subsetNotes.length; ++j) {
+              var className = "." + subsetNotes[j] + i;
+              var noteEl = document.querySelector(className);
+              if (noteEl) {
+                (function(el, tm) {
+                  setTimeout(function() {
+                    el.classList.add('active');
+                  }, tm);
+                })(noteEl, timeout);
+                timeout += timeoutInc;
+              }
+            }
+          }
+
+          setTimeout(function() {
+            isPlaying = false;
+            playButton.removeAttribute('disabled');
+          }, timeout);
+        }
+
+        playButton.addEventListener('click', function(event) {
+          event.preventDefault();
+          playNotes(200);
+        });
+
+        playNotes(80);
+      }
+
+    })();
+  </script>
+  </body>
+</html>
