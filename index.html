@@ -66,6 +66,15 @@
 
       <br>
       <br>
+
+      <a href="#" id="stop-button" class="button is-danger is-large">
+        <span class="icon is-small is-left">
+          <i class="fas fa-stop fa-xs"></i>
+        </span>
+        &nbsp;
+        Stop
+      </a>
+
       <a href="#" id="play-button" class="button is-primary is-large">
         <span class="icon is-small is-left">
           <i class="fas fa-play fa-xs"></i>
@@ -73,66 +82,52 @@
         &nbsp;
         Play
       </a>
+
+      <a href="#" id="play-slow-button" class="button is-primary is-large"
+      style="display:none;">
+        <span class="icon is-small is-left">
+          <i class="fas fa-play fa-xs"></i>
+        </span>
+        &nbsp;
+        Play Slow
+      </a>
+
+      <a href="#" id="play-random-button" class="button is-primary is-large">
+        <span class="icon is-small is-left">
+          <i class="fas fa-play fa-xs"></i>
+        </span>
+        &nbsp;
+        Play Random Melody
+      </a>
+
+      <input
+        id="tempo-input"
+        class="input is-large"
+        type="number" style="max-width: 120px;" value="500">
     </div>
   </section>
   </script>
 
-  <!--
-  <section class="section">
-    <div class="container">
-
-      <form action="">
-        <div class="field">
-          <label class="label is-large">Large input</label>
-
-
-          <div class="columns">
-            <div class="column">
-              <div class="control has-icons-left has-icons-right">
-                <input class="input is-large" type="email" placeholder="Extra small">
-                <span class="icon is-small is-left">
-                  <i class="fas fa-envelope fa-xs"></i>
-                </span>
-                <span class="icon is-small is-right">
-                  <i class="fas fa-check fa-xs"></i>
-                </span>
-              </div>
-            </div>
-            <div class="column">
-              Second column
-            </div>
-          </div>
-
-        </div>
-
-      </form>
-    </div>
-  </section>
-  -->
-
   <script>
     (function() {
-      var synth = new Tone.PolySynth(8, Tone.FMSynth, {
-        harmonicity: 3,
-        modulationIndex: 5,
-        detune: 0,
-        oscillator: {
-          type: 'sine'
+      var synth = new Tone.PolySynth(8, Tone.MonoSynth, {
+        "portamento" : 0.01,
+        "oscillator" : {
+          "type" : "triangle"
         },
-        envelope: {
-          attack: 0.01,
-          decay: 0.01,
-          sustain: 1,
-          release: 0.5
-        } ,
-        modulation: {
-          type: 'square'
+        "envelope" : {
+          "attack" : 0.05,
+          "decay" : 0.2,
+          "sustain" : 0.4,
+          "release" : 1.4,
         },
-        modulationEnvelope: {
-          attack: 0.2,
-          decay: 0,
-          sustain: 1,
-          release: 0.5
+        "filterEnvelope" : {
+          "attack" : 0.005,
+          "decay" : 0.1,
+          "sustain" : 0.05,
+          "release" : 0.8,
+          "baseFrequency" : 500,
+          "octaves" : 4
         }
       }).toMaster();
 
@@ -179,6 +174,7 @@
         }
       }
 
+      var playSequence = 0;
       function displayResults() {
         var NUM_NOTES = 6;
 
@@ -209,17 +205,27 @@
         console.log(subsetNotes);
 
         var playButton = document.getElementById("play-button");
+        var playSlowButton = document.getElementById("play-slow-button");
+        var playRandomMelodyButton = document.getElementById("play-random-button");
+        var stopButton = document.getElementById("stop-button");
+        var tempoInput = document.getElementById("tempo-input");
 
         var isPlaying = false;
+        var stopPlaying = null;
 
-        function playNotes(timeoutInc) {
+        function playNotes(random) {
           if (isPlaying) { return; }
           isPlaying = true;
           playButton.setAttribute('disabled', true);
+          playSlowButton.setAttribute('disabled', true);
+          playRandomMelodyButton.setAttribute('disabled', true);
+          stopButton.removeAttribute('disabled');
 
           document.querySelectorAll("#beautiful-piano .active").forEach(function(el) {
             el.classList.remove('active');
           });
+
+          var els = [];
 
           var timeout = 200;
           for(var i = 2; i <= 5; ++i) {
@@ -227,30 +233,86 @@
               var className = "." + subsetNotes[j] + i;
               var noteEl = document.querySelector(className);
               if (noteEl) {
-                (function(el, tm) {
-                  setTimeout(function() {
-                    el.classList.add('active');
-                    var note = el.getAttribute('data-ipn').replace('s', '#');
-                    synth.triggerAttackRelease(note, 0.3)
-                  }, tm);
-                })(noteEl, timeout);
-                timeout += timeoutInc;
+                els.push(noteEl);
               }
             }
           }
 
-          setTimeout(function() {
+          stopPlaying = function() {
+            playSequence++;
             isPlaying = false;
             playButton.removeAttribute('disabled');
-          }, timeout);
+            playSlowButton.removeAttribute('disabled');
+            playRandomMelodyButton.removeAttribute('disabled');
+            stopButton.setAttribute('disabled', true);
+          };
+
+          function quarterNote() {
+            return (60.0 / Math.max(60, parseInt(tempoInput.value)) * 1000);
+          }
+
+          var ps = playSequence;
+          if (random) {
+            (function lol(lastIndex) {
+              if (ps !== playSequence) { return; }
+              var newIndex = Math.min(
+                Math.max(
+                  lastIndex + Math.floor(Math.random() * 5) - 2,
+                  0
+                ),
+                els.length - 1
+              );
+
+              els[lastIndex].classList.remove('active');
+
+              var el = els[newIndex];
+
+              el.classList.add('active');
+              var note = el.getAttribute('data-ipn').replace('s', '#');
+              synth.triggerAttackRelease(note, 0.3)
+
+              setTimeout(function() {
+                lol(newIndex);
+              }, Math.floor(Math.random() * 2 + 1) * quarterNote());
+            }(5));
+          } else {
+            (function wat(idx) {
+              if (ps !== playSequence) { return; }
+              var el = els[idx];
+
+              if (!el) { stopPlaying(); return; }
+
+              el.classList.add('active');
+              var note = el.getAttribute('data-ipn').replace('s', '#');
+              synth.triggerAttackRelease(note, 0.3)
+
+              timeoutInc = parseInt(tempoInput.value);
+
+              setTimeout(function() {
+                wat(idx + 1);
+              }, quarterNote() / 2);
+            }(0));
+          }
         }
 
         playButton.addEventListener('click', function(event) {
           event.preventDefault();
-          playNotes(80);
+          playNotes(false);
         });
 
-        playNotes(80);
+        playRandomMelodyButton.addEventListener('click', function(event) {
+          event.preventDefault();
+          playNotes(true);
+        });
+
+        stopButton.addEventListener('click', function(event) {
+          event.preventDefault();
+          if (isPlaying) {
+            stopPlaying();
+          }
+        });
+
+        playNotes(false);
       }
 
     })();
