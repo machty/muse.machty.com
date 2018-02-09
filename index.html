@@ -110,26 +110,7 @@
 
   <script>
     (function() {
-      var synth = new Tone.PolySynth(8, Tone.MonoSynth, {
-        "portamento" : 0.01,
-        "oscillator" : {
-          "type" : "triangle"
-        },
-        "envelope" : {
-          "attack" : 0.05,
-          "decay" : 0.2,
-          "sustain" : 0.4,
-          "release" : 1.4,
-        },
-        "filterEnvelope" : {
-          "attack" : 0.005,
-          "decay" : 0.1,
-          "sustain" : 0.05,
-          "release" : 0.8,
-          "baseFrequency" : 500,
-          "octaves" : 4
-        }
-      }).toMaster();
+      var synth;
 
       var submitButton = document.getElementById('submit-button');
       var isComputing = false;
@@ -214,6 +195,28 @@
         var stopPlaying = null;
 
         function playNotes(random) {
+          synth = synth || new Tone.PolySynth(8, Tone.MonoSynth, {
+            "portamento" : 0.01,
+            "oscillator" : {
+              "type" : "triangle"
+            },
+            "envelope" : {
+              "attack" : 0.05,
+              "decay" : 0.2,
+              "sustain" : 0.4,
+              "release" : 1.4,
+            },
+            "filterEnvelope" : {
+              "attack" : 0.005,
+              "decay" : 0.1,
+              "sustain" : 0.05,
+              "release" : 0.8,
+              "baseFrequency" : 500,
+              "octaves" : 4
+            }
+          }).toMaster();
+
+
           if (isPlaying) { return; }
           isPlaying = true;
           playButton.setAttribute('disabled', true);
