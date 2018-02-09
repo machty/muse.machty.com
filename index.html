@@ -8,6 +8,7 @@
     <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
 
     <script src="piano.js"></script>
+    <script src="Tone.min.js"></script>
     <link rel="stylesheet" href="piano.css" media="all">
   </head>
   <body>
@@ -111,6 +112,30 @@
 
   <script>
     (function() {
+      var synth = new Tone.PolySynth(8, Tone.FMSynth, {
+        harmonicity: 3,
+        modulationIndex: 5,
+        detune: 0,
+        oscillator: {
+          type: 'sine'
+        },
+        envelope: {
+          attack: 0.01,
+          decay: 0.01,
+          sustain: 1,
+          release: 0.5
+        } ,
+        modulation: {
+          type: 'square'
+        },
+        modulationEnvelope: {
+          attack: 0.2,
+          decay: 0,
+          sustain: 1,
+          release: 0.5
+        }
+      }).toMaster();
+
       var submitButton = document.getElementById('submit-button');
       var isComputing = false;
       submitButton.addEventListener('click', function(event) {
@@ -205,6 +230,8 @@
                 (function(el, tm) {
                   setTimeout(function() {
                     el.classList.add('active');
+                    var note = el.getAttribute('data-ipn').replace('s', '#');
+                    synth.triggerAttackRelease(note, 0.3)
                   }, tm);
                 })(noteEl, timeout);
                 timeout += timeoutInc;
